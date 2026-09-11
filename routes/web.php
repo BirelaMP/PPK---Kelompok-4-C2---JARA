@@ -8,6 +8,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskListMemberController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TaskListController;
 
 // Public Homepage / Landing
 Route::get('/', function () {
@@ -69,3 +70,11 @@ Route::prefix('admin')->group(function () {
     Route::post('/manage-users', [UserController::class, 'store'])->name('users.store');
     Route::delete('/manage-users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('task-lists', TaskListController::class)->parameters([
+        'task-lists' => 'taskList',
+    ]);
+});
+
+// Authentication routes akan diintegrasikan dari branch User Management.
