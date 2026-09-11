@@ -15,15 +15,26 @@ class TaskSeeder extends Seeder
      */
     public function run(): void
     {
-        $budi = User::where('email', 'budi@jara.com')->first();
-        $siti = User::where('email', 'siti@jara.com')->first();
-        $andi = User::where('email', 'andi@jara.com')->first();
+        $user = User::first() ?? User::create([
+            'name' => 'Demo User',
+            'email' => 'user@jara.com',
+            'password' => bcrypt('password'),
+        ]);
 
-        $websiteList = TaskList::where('name', 'Project Website Redesign')->first();
-        $mobileList = TaskList::where('name', 'Mobile App Development')->first();
-        $personalList = TaskList::where('name', 'Personal Professional Goals')->first();
+        $taskList = TaskList::first() ?? TaskList::create([
+            'user_id' => $user->id,
+            'name' => 'General Tasks',
+            'description' => 'Main task list for JARA application',
+        ]);
 
-        if ($websiteList && $budi && $siti && $andi) {
+        $budi = $user;
+        $siti = $user;
+        $andi = $user;
+        $websiteList = $taskList;
+        $mobileList = $taskList;
+        $personalList = $taskList;
+
+        if ($websiteList && $budi) {
             Task::firstOrCreate(
                 ['task_list_id' => $websiteList->id, 'title' => 'Design UI/UX Mockups with Figma'],
                 [

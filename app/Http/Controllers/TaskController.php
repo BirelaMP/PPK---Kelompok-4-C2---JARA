@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -22,11 +23,7 @@ class TaskController extends Controller
     {
         $user = Auth::user();
 
-        $accessibleListIds = TaskList::where('user_id', $user->id)
-            ->orWhereHas('members', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
-            })
-            ->pluck('id');
+        $accessibleListIds = $this->getAccessibleListIds($user);
         $accessibleLists = TaskList::whereIn('id', $accessibleListIds)->orderBy('name')->get();
 
         $query = Task::with(['taskList', 'creator', 'assignee'])
@@ -80,12 +77,8 @@ class TaskController extends Controller
     {
         $user = Auth::user();
 
-        $taskLists = TaskList::where('user_id', $user->id)
-            ->orWhereHas('members', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
-            })
-            ->orderBy('name')
-            ->get();
+        $accessibleListIds = $this->getAccessibleListIds($user);
+        $taskLists = TaskList::whereIn('id', $accessibleListIds)->orderBy('name')->get();
 
         // If user has no task list, create a default list so they can immediately add tasks
         if ($taskLists->isEmpty()) {
@@ -110,7 +103,7 @@ class TaskController extends Controller
         $user = Auth::user();
         $taskList = TaskList::findOrFail($request->task_list_id);
 
-        if (! $taskList->canAccess($user)) {
+        if (! $this->canAccessList($taskList, $user)) {
             abort(403, 'You do not have access to this task list.');
         }
 
@@ -135,9 +128,16 @@ class TaskController extends Controller
     public function show(Task $task): View
     {
         $user = Auth::user();
-        $task->load(['taskList.owner', 'taskList.members', 'creator', 'assignee']);
+        $relations = ['creator', 'assignee'];
+        if ($task->taskList) {
+            $relations[] = 'taskList.owner';
+            if (Schema::hasTable('task_list_user')) {
+                $relations[] = 'taskList.members';
+            }
+        }
+        $task->load($relations);
 
-        if ($task->taskList && ! $task->taskList->canAccess($user) && $task->created_by !== $user->id && $task->assigned_to !== $user->id) {
+        if ($task->taskList && ! $this->canAccessList($task->taskList, $user) && $task->created_by !== $user->id && $task->assigned_to !== $user->id) {
             abort(403, 'You do not have access to view this task.');
         }
 
@@ -150,18 +150,23 @@ class TaskController extends Controller
     public function edit(Task $task): View
     {
         $user = Auth::user();
-        $task->load(['taskList.members', 'taskList.owner']);
+        $relations = [];
+        if ($task->taskList) {
+            $relations[] = 'taskList.owner';
+            if (Schema::hasTable('task_list_user')) {
+                $relations[] = 'taskList.members';
+            }
+        }
+        if (! empty($relations)) {
+            $task->load($relations);
+        }
 
-        if ($task->taskList && ! $task->taskList->canAccess($user) && $task->created_by !== $user->id) {
+        if ($task->taskList && ! $this->canAccessList($task->taskList, $user) && $task->created_by !== $user->id) {
             abort(403, 'You do not have access to edit this task.');
         }
 
-        $taskLists = TaskList::where('user_id', $user->id)
-            ->orWhereHas('members', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
-            })
-            ->orderBy('name')
-            ->get();
+        $accessibleListIds = $this->getAccessibleListIds($user);
+        $taskLists = TaskList::whereIn('id', $accessibleListIds)->orderBy('name')->get();
 
         if ($taskLists->isEmpty() && $task->taskList) {
             $taskLists = collect([$task->taskList]);
@@ -180,7 +185,7 @@ class TaskController extends Controller
         $user = Auth::user();
         $taskList = TaskList::findOrFail($request->task_list_id);
 
-        if (! $taskList->canAccess($user) && $task->created_by !== $user->id) {
+        if (! $this->canAccessList($taskList, $user) && $task->created_by !== $user->id) {
             abort(403, 'You do not have access to move or edit tasks in this task list.');
         }
 
@@ -228,7 +233,7 @@ class TaskController extends Controller
     {
         $user = Auth::user();
 
-        if ($task->taskList && ! $task->taskList->canAccess($user) && $task->created_by !== $user->id && $task->assigned_to !== $user->id) {
+        if ($task->taskList && ! $this->canAccessList($task->taskList, $user) && $task->created_by !== $user->id && $task->assigned_to !== $user->id) {
             abort(403, 'You do not have access to modify this task.');
         }
 
@@ -239,5 +244,45 @@ class TaskController extends Controller
         $task->update(['status' => $validated['status']]);
 
         return back()->with('success', 'Task status updated to '.$task->status.'.');
+    }
+
+    /**
+     * Helper to get list IDs accessible by the user.
+     */
+    private function getAccessibleListIds($user)
+    {
+        $query = TaskList::where('user_id', $user->id);
+
+        if (Schema::hasTable('task_list_user')) {
+            $query->orWhereHas('members', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+        }
+
+        return $query->pluck('id');
+    }
+
+    /**
+     * Helper to verify if user can access a task list.
+     */
+    private function canAccessList(TaskList $taskList, $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ((int) $taskList->user_id === (int) $user->id) {
+            return true;
+        }
+
+        if (Schema::hasTable('task_list_user') && $taskList->members()->whereKey($user->id)->exists()) {
+            return true;
+        }
+
+        if (! empty($user->is_admin) || (method_exists($user, 'isAdmin') && $user->isAdmin())) {
+            return true;
+        }
+
+        return false;
     }
 }

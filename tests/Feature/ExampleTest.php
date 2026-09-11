@@ -1,7 +1,7 @@
 <?php
 
-test('the application redirects guest from root to login', function () {
+test('the application redirects root to tasks', function () {
     $response = $this->get('/');
 
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect('/tasks');
 });

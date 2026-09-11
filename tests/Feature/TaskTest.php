@@ -6,7 +6,7 @@ use App\Models\User;
 
 test('authenticated users can view the tasks index page', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
 
     Task::factory()->count(3)->create([
         'task_list_id' => $list->id,
@@ -21,7 +21,7 @@ test('authenticated users can view the tasks index page', function () {
 
 test('users can create tasks inside their task list', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
 
     $response = $this->actingAs($user)->post('/tasks', [
         'task_list_id' => $list->id,
@@ -45,7 +45,7 @@ test('users can create tasks inside their task list', function () {
 
 test('task validation enforces required title, priority, status, and deadline', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
 
     $response = $this->actingAs($user)->post('/tasks', [
         'task_list_id' => $list->id,
@@ -60,7 +60,7 @@ test('task validation enforces required title, priority, status, and deadline', 
 
 test('users can view task details', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
     $task = Task::factory()->create([
         'task_list_id' => $list->id,
         'created_by' => $user->id,
@@ -75,7 +75,7 @@ test('users can view task details', function () {
 
 test('users can view task edit form', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
     $task = Task::factory()->create([
         'task_list_id' => $list->id,
         'created_by' => $user->id,
@@ -89,7 +89,7 @@ test('users can view task edit form', function () {
 
 test('users can update task attributes', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
     $task = Task::factory()->create([
         'task_list_id' => $list->id,
         'created_by' => $user->id,
@@ -116,7 +116,7 @@ test('users can update task attributes', function () {
 
 test('users can update task status', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
     $task = Task::factory()->create([
         'task_list_id' => $list->id,
         'created_by' => $user->id,
@@ -136,7 +136,7 @@ test('users can update task status', function () {
 
 test('users can filter tasks by priority and status', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
 
     $urgentTask = Task::factory()->create([
         'task_list_id' => $list->id,
@@ -169,7 +169,7 @@ test('users can filter tasks by priority and status', function () {
 
 test('users can delete tasks in their list', function () {
     $user = User::factory()->create();
-    $list = TaskList::factory()->create(['user_id' => $user->id]);
+    $list = TaskList::create(['user_id' => $user->id, 'name' => 'General Tasks', 'description' => 'Test task list']);
     $task = Task::factory()->create([
         'task_list_id' => $list->id,
         'created_by' => $user->id,

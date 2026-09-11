@@ -212,12 +212,14 @@
                 <div class="py-3">
                     <div class="sidebar-heading">Workspace</div>
                     <ul class="nav flex-column">
+                        @if(Route::has('dashboard'))
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                                 <i class="bi bi-grid-1x2-fill"></i>
                                 <span>Dashboard</span>
                             </a>
                         </li>
+                        @endif
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}">
                                 <i class="bi bi-check2-square"></i>
@@ -229,7 +231,7 @@
                     <div class="sidebar-heading mt-4">Account</div>
                     <ul class="nav flex-column mb-4">
                         <li class="nav-item">
-                            <form method="POST" action="{{ route('logout') }}" id="logoutFormSidebar">
+                            <form method="POST" action="{{ Route::has('logout') ? route('logout') : '#' }}" id="logoutFormSidebar">
                                 @csrf
                                 <a class="nav-link text-danger-emphasis" href="#" onclick="event.preventDefault(); document.getElementById('logoutFormSidebar').submit();">
                                     <i class="bi bi-box-arrow-right"></i>
@@ -295,7 +297,7 @@
                                     <a class="dropdown-item py-2 text-danger" href="#" onclick="event.preventDefault(); document.getElementById('navbarLogoutForm').submit();">
                                         <i class="bi bi-box-arrow-right me-2"></i> Logout
                                     </a>
-                                    <form id="navbarLogoutForm" action="{{ route('logout') }}" method="POST" class="d-none">
+                                    <form id="navbarLogoutForm" action="{{ Route::has('logout') ? route('logout') : '#' }}" method="POST" class="d-none">
                                         @csrf
                                     </form>
                                 </li>
