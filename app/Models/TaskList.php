@@ -75,11 +75,9 @@ class TaskList extends Model
         if ($user === null) {
             return false;
         }
-
-        return (method_exists($user, 'isAdmin') && $user->isAdmin())
-            || (! empty($user->is_admin))
-            || $this->isOwnedBy($user)
-            || $this->hasMember($user);
+return $user->isAdmin()
+    || $this->isOwnedBy($user)
+    || $this->hasMember($user);
     }
 
     /**
