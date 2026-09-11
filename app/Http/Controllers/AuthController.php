@@ -17,13 +17,20 @@ class AuthController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $credentials = $request->validate(['email' => ['required', 'email'], 'password' => ['required']]);
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
         if (! Auth::attempt($credentials)) {
-            return back()->withErrors(['email' => 'Email atau password salah.'])->onlyInput('email');
+            return back()
+                ->withErrors(['email' => 'Email atau password salah.'])
+                ->onlyInput('email');
         }
+
         $request->session()->regenerate();
 
-        return to_route('lists.index');
+        return to_route('task-lists.index');
     }
 
     public function register(): View
@@ -33,12 +40,19 @@ class AuthController extends Controller
 
     public function registerStore(Request $request): RedirectResponse
     {
-        $data = $request->validate(['name' => ['required', 'string', 'max:255'], 'email' => ['required', 'email', 'unique:users,email'], 'password' => ['required', 'min:6', 'confirmed']]);
-        $data['is_admin'] = ! User::query()->exists();
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', 'min:6', 'confirmed'],
+        ]);
+
+        $data['role'] = User::query()->exists() ? 'user' : 'admin';
+
         $user = User::create($data);
+
         Auth::login($user);
 
-        return to_route('lists.index');
+        return to_route('task-lists.index');
     }
 
     public function destroy(Request $request): RedirectResponse

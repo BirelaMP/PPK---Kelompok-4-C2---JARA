@@ -33,6 +33,6 @@ test('a user can authenticate via login form', function () {
         'password' => 'password123',
     ]);
 
-    $response->assertRedirect(route('lists.index'));
+    $response->assertRedirect(route('task-lists.index'));
     $this->assertAuthenticatedAs($user);
 });
