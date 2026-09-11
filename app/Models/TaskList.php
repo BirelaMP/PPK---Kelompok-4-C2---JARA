@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\TaskListFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaskList extends Model
 {
-    /** @use HasFactory<TaskListFactory> */
     use HasFactory;
 
     /**
@@ -78,7 +76,10 @@ class TaskList extends Model
             return false;
         }
 
-        return $user->isAdmin() || $this->isOwnedBy($user) || $this->hasMember($user);
+        return (method_exists($user, 'isAdmin') && $user->isAdmin())
+            || (! empty($user->is_admin))
+            || $this->isOwnedBy($user)
+            || $this->hasMember($user);
     }
 
     /**

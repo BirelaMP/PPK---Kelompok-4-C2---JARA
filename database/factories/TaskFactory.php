@@ -22,7 +22,7 @@ class TaskFactory extends Factory
         return [
             'task_list_id' => function () {
                 return TaskList::inRandomOrder()->first()?->id ?? TaskList::create([
-                    'user_id' => User::factory(),
+                    'user_id' => User::inRandomOrder()->first()?->id ?? User::factory()->create()->id,
                     'name' => 'General Tasks',
                     'description' => 'Default task list',
                 ])->id;

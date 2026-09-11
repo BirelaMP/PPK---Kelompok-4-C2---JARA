@@ -18,6 +18,7 @@ class Task extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'project_id',
         'task_list_id',
         'created_by',
         'assigned_to',
@@ -38,6 +39,14 @@ class Task extends Model
         return [
             'deadline' => 'date',
         ];
+    }
+
+    /**
+     * The project that this task belongs to (collaboration module).
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     /**

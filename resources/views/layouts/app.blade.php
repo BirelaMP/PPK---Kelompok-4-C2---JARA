@@ -220,12 +220,44 @@
                             </a>
                         </li>
                         @endif
+                        @if(Route::has('lists.index'))
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('lists.*') ? 'active' : '' }}" href="{{ route('lists.index') }}">
+                                <i class="bi bi-folder2"></i>
+                                <span>Task Lists</span>
+                            </a>
+                        </li>
+                        @elseif(Route::has('task-lists.index'))
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('task-lists.*') ? 'active' : '' }}" href="{{ route('task-lists.index') }}">
+                                <i class="bi bi-folder2"></i>
+                                <span>Task Lists</span>
+                            </a>
+                        </li>
+                        @endif
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}">
                                 <i class="bi bi-check2-square"></i>
                                 <span>Task Management</span>
                             </a>
                         </li>
+                        @if(Auth::user()?->isAdmin())
+                            @if(Route::has('users.index'))
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                                    <i class="bi bi-people-fill"></i>
+                                    <span>User Management</span>
+                                </a>
+                            </li>
+                            @elseif(Route::has('admin.users'))
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}" href="{{ route('admin.users') }}">
+                                    <i class="bi bi-people-fill"></i>
+                                    <span>User Management</span>
+                                </a>
+                            </li>
+                            @endif
+                        @endif
                     </ul>
 
                     <div class="sidebar-heading mt-4">Account</div>
