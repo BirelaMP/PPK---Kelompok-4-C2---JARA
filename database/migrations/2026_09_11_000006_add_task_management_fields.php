@@ -8,19 +8,31 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->foreignId('owner_id')->nullable()->after('id')->constrained('users')->nullOnDelete();
-        });
+        if (Schema::hasTable('projects') && ! Schema::hasColumn('projects', 'owner_id')) {
+            Schema::table('projects', function (Blueprint $table) {
+                $table->foreignId('owner_id')->nullable()->after('id')->constrained('users')->nullOnDelete();
+            });
+        }
 
-        Schema::table('tasks', function (Blueprint $table) {
-            $table->text('description')->nullable()->after('title');
-            $table->string('priority')->default('medium')->after('description');
-            $table->date('deadline')->nullable()->after('priority');
-        });
+        if (Schema::hasTable('tasks')) {
+            Schema::table('tasks', function (Blueprint $table) {
+                if (! Schema::hasColumn('tasks', 'description')) {
+                    $table->text('description')->nullable()->after('title');
+                }
+                if (! Schema::hasColumn('tasks', 'priority')) {
+                    $table->string('priority')->default('medium')->after('description');
+                }
+                if (! Schema::hasColumn('tasks', 'deadline')) {
+                    $table->date('deadline')->nullable()->after('priority');
+                }
+            });
+        }
 
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('is_admin')->default(false)->after('email');
-        });
+        if (Schema::hasTable('users') && ! Schema::hasColumn('users', 'is_admin')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->boolean('is_admin')->default(false)->after('email');
+            });
+        }
     }
 
     public function down(): void

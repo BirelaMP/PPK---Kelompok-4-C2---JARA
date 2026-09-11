@@ -8,13 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tasks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('project_id')->constrained()->cascadeOnDelete();
-            $table->string('title');
-            $table->string('status')->default('pending');
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('tasks')) {
+            Schema::create('tasks', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('project_id')->constrained()->cascadeOnDelete();
+                $table->string('title');
+                $table->string('status')->default('pending');
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void
