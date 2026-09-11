@@ -22,21 +22,19 @@ class TaskController extends Controller
     {
         $user = Auth::user();
 
-        // Accessible task lists
-        if ($user->isAdmin()) {
-            $accessibleListIds = TaskList::pluck('id');
-            $accessibleLists = TaskList::orderBy('name')->get();
-        } else {
-            $accessibleListIds = TaskList::where('user_id', $user->id)
-                ->orWhereHas('members', function ($q) use ($user) {
-                    $q->where('users.id', $user->id);
-                })
-                ->pluck('id');
-            $accessibleLists = TaskList::whereIn('id', $accessibleListIds)->orderBy('name')->get();
-        }
+        $accessibleListIds = TaskList::where('user_id', $user->id)
+            ->orWhereHas('members', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })
+            ->pluck('id');
+        $accessibleLists = TaskList::whereIn('id', $accessibleListIds)->orderBy('name')->get();
 
         $query = Task::with(['taskList', 'creator', 'assignee'])
-            ->whereIn('task_list_id', $accessibleListIds);
+            ->where(function ($q) use ($accessibleListIds, $user) {
+                $q->whereIn('task_list_id', $accessibleListIds)
+                    ->orWhere('created_by', $user->id)
+                    ->orWhere('assigned_to', $user->id);
+            });
 
         // Filter by search
         if ($request->filled('search')) {
@@ -82,21 +80,24 @@ class TaskController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->isAdmin()) {
-            $taskLists = TaskList::with(['owner', 'members'])->orderBy('name')->get();
-            $users = User::orderBy('name')->get();
-        } else {
-            $taskLists = TaskList::with(['owner', 'members'])
-                ->where('user_id', $user->id)
-                ->orWhereHas('members', function ($q) use ($user) {
-                    $q->where('users.id', $user->id);
-                })
-                ->orderBy('name')
-                ->get();
-            $users = User::orderBy('name')->get();
+        $taskLists = TaskList::where('user_id', $user->id)
+            ->orWhereHas('members', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })
+            ->orderBy('name')
+            ->get();
+
+        // If user has no task list, create a default list so they can immediately add tasks
+        if ($taskLists->isEmpty()) {
+            $defaultList = TaskList::firstOrCreate(
+                ['user_id' => $user->id, 'name' => 'General Tasks'],
+                ['description' => 'Default task list for tasks']
+            );
+            $taskLists = collect([$defaultList]);
         }
 
-        $selectedListId = $request->input('task_list_id');
+        $users = User::orderBy('name')->get();
+        $selectedListId = $request->input('task_list_id', $taskLists->first()?->id);
 
         return view('tasks.create', compact('taskLists', 'users', 'selectedListId'));
     }
@@ -124,7 +125,7 @@ class TaskController extends Controller
             'deadline' => $request->deadline,
         ]);
 
-        return redirect()->route('task-lists.show', $taskList)
+        return redirect()->route('tasks.index')
             ->with('success', 'Task "'.$task->title.'" created successfully!');
     }
 
@@ -136,7 +137,7 @@ class TaskController extends Controller
         $user = Auth::user();
         $task->load(['taskList.owner', 'taskList.members', 'creator', 'assignee']);
 
-        if (! $task->taskList->canAccess($user)) {
+        if ($task->taskList && ! $task->taskList->canAccess($user) && $task->created_by !== $user->id && $task->assigned_to !== $user->id) {
             abort(403, 'You do not have access to view this task.');
         }
 
@@ -151,22 +152,22 @@ class TaskController extends Controller
         $user = Auth::user();
         $task->load(['taskList.members', 'taskList.owner']);
 
-        if (! $task->taskList->canAccess($user)) {
+        if ($task->taskList && ! $task->taskList->canAccess($user) && $task->created_by !== $user->id) {
             abort(403, 'You do not have access to edit this task.');
         }
 
-        if ($user->isAdmin()) {
-            $taskLists = TaskList::orderBy('name')->get();
-            $users = User::orderBy('name')->get();
-        } else {
-            $taskLists = TaskList::where('user_id', $user->id)
-                ->orWhereHas('members', function ($q) use ($user) {
-                    $q->where('users.id', $user->id);
-                })
-                ->orderBy('name')
-                ->get();
-            $users = User::orderBy('name')->get();
+        $taskLists = TaskList::where('user_id', $user->id)
+            ->orWhereHas('members', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })
+            ->orderBy('name')
+            ->get();
+
+        if ($taskLists->isEmpty() && $task->taskList) {
+            $taskLists = collect([$task->taskList]);
         }
+
+        $users = User::orderBy('name')->get();
 
         return view('tasks.edit', compact('task', 'taskLists', 'users'));
     }
@@ -179,7 +180,7 @@ class TaskController extends Controller
         $user = Auth::user();
         $taskList = TaskList::findOrFail($request->task_list_id);
 
-        if (! $taskList->canAccess($user)) {
+        if (! $taskList->canAccess($user) && $task->created_by !== $user->id) {
             abort(403, 'You do not have access to move or edit tasks in this task list.');
         }
 
@@ -193,7 +194,7 @@ class TaskController extends Controller
             'deadline' => $request->deadline,
         ]);
 
-        return redirect()->route('task-lists.show', $task->task_list_id)
+        return redirect()->route('tasks.show', $task)
             ->with('success', 'Task "'.$task->title.'" updated successfully!');
     }
 
@@ -205,20 +206,18 @@ class TaskController extends Controller
         $user = Auth::user();
         $taskList = $task->taskList;
 
-        // Allowed if admin, creator of task, or owner of list
-        $canDelete = $user->isAdmin()
-            || (int) $task->created_by === (int) $user->id
-            || (int) $taskList->user_id === (int) $user->id;
+        // Allowed if creator of task or owner of list
+        $canDelete = (int) $task->created_by === (int) $user->id
+            || ($taskList && (int) $taskList->user_id === (int) $user->id);
 
         if (! $canDelete) {
             abort(403, 'You do not have permission to delete this task.');
         }
 
-        $listId = $task->task_list_id;
         $title = $task->title;
         $task->delete();
 
-        return redirect()->route('task-lists.show', $listId)
+        return redirect()->route('tasks.index')
             ->with('success', 'Task "'.$title.'" was deleted.');
     }
 
@@ -229,7 +228,7 @@ class TaskController extends Controller
     {
         $user = Auth::user();
 
-        if (! $task->taskList->canAccess($user)) {
+        if ($task->taskList && ! $task->taskList->canAccess($user) && $task->created_by !== $user->id && $task->assigned_to !== $user->id) {
             abort(403, 'You do not have access to modify this task.');
         }
 

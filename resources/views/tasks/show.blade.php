@@ -42,9 +42,9 @@
                     <!-- Task List & Creator -->
                     <div class="col-sm-6 col-md-3">
                         <div class="text-muted small fw-semibold mb-1">Task List</div>
-                        <a href="{{ route('task-lists.show', $task->taskList) }}" class="fw-bold text-primary text-decoration-none d-block">
-                            <i class="bi bi-folder2 me-1"></i> {{ $task->taskList->name }}
-                        </a>
+                        <span class="fw-bold text-dark d-block">
+                            <i class="bi bi-folder2 me-1 text-primary"></i> {{ $task->taskList?->name ?? 'General' }}
+                        </span>
                     </div>
 
                     <!-- Assignee -->
@@ -95,8 +95,8 @@
 
             <!-- Footer actions -->
             <div class="card-footer bg-white border-top p-3 d-flex justify-content-between align-items-center">
-                <a href="{{ route('task-lists.show', $task->taskList) }}" class="btn btn-light border">
-                    <i class="bi bi-arrow-left me-1"></i> Back to Task List
+                <a href="{{ route('tasks.index') }}" class="btn btn-light border">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Tasks
                 </a>
 
                 <div class="d-flex gap-2">
@@ -104,7 +104,7 @@
                         <i class="bi bi-pencil me-1"></i> Edit Task
                     </a>
 
-                    @if(Auth::user()->isAdmin() || $task->created_by === Auth::id() || $task->taskList->isOwnedBy(Auth::user()))
+                    @if($task->created_by === Auth::id() || ($task->taskList && $task->taskList->user_id === Auth::id()) || Auth::user()->isAdmin())
                         <form action="{{ route('tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Delete this task permanently?');">
                             @csrf
                             @method('DELETE')

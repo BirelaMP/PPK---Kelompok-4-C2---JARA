@@ -1,15 +1,15 @@
 <?php
 
-use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TaskController;
-use App\Http\Controllers\TaskListController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes - JARA (Job Activity & Responsibility Assistant)
+|--------------------------------------------------------------------------
+| SRS-02: Task Management Feature
 |--------------------------------------------------------------------------
 */
 
@@ -34,23 +34,10 @@ Route::middleware('auth')->group(function () {
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Dashboard (dynamic Admin / User view)
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Task Lists & Collaboration
-    Route::resource('task-lists', TaskListController::class)->parameters([
-        'task-lists' => 'taskList',
-    ]);
-    Route::get('/task-lists/{taskList}/members', [TaskListController::class, 'members'])->name('task-lists.members');
-    Route::post('/task-lists/{taskList}/members', [TaskListController::class, 'addMember'])->name('task-lists.members.add');
-    Route::delete('/task-lists/{taskList}/members/{user}', [TaskListController::class, 'removeMember'])->name('task-lists.members.remove');
-
-    // Tasks Management
+    // SRS-02: Tasks Management
     Route::resource('tasks', TaskController::class);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
-
-    // Admin Only User Management Routes (Protected by role:admin middleware)
-    Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
-        Route::resource('users', AdminUserController::class);
-    });
 });

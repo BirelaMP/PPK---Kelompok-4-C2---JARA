@@ -21,7 +21,7 @@
                         <select class="form-select @error('task_list_id') is-invalid @enderror" id="task_list_id" name="task_list_id" required>
                             @foreach($taskLists as $list)
                                 <option value="{{ $list->id }}" {{ (string) old('task_list_id', $task->task_list_id) === (string) $list->id ? 'selected' : '' }}>
-                                    {{ $list->name }} (Owner: {{ $list->owner->name }})
+                                    {{ $list->name }} {{ $list->owner ? '(Owner: ' . $list->owner->name . ')' : '' }}
                                 </option>
                             @endforeach
                         </select>

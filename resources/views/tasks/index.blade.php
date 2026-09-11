@@ -124,9 +124,9 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('task-lists.show', $task->taskList) }}" class="badge bg-light text-secondary border text-decoration-none">
-                                        {{ $task->taskList->name }}
-                                    </a>
+                                    <span class="badge bg-light text-secondary border">
+                                        <i class="bi bi-collection me-1"></i>{{ $task->taskList?->name ?? 'General' }}
+                                    </span>
                                 </td>
                                 <td>
                                     <span class="badge badge-priority-{{ $task->priority }}">
@@ -185,7 +185,7 @@
                                                     <i class="bi bi-pencil me-2 text-warning"></i> Edit Task
                                                 </a>
                                             </li>
-                                            @if(Auth::user()->isAdmin() || $task->created_by === Auth::id() || $task->taskList->isOwnedBy(Auth::user()))
+                                            @if($task->created_by === Auth::id() || ($task->taskList && $task->taskList->user_id === Auth::id()) || Auth::user()->isAdmin())
                                                 <li>
                                                     <form action="{{ route('tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Delete this task?');">
                                                         @csrf

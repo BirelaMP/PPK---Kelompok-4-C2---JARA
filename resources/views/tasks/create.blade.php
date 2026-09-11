@@ -21,7 +21,7 @@
                             <option value="">-- Choose Task List --</option>
                             @foreach($taskLists as $list)
                                 <option value="{{ $list->id }}" {{ (string) old('task_list_id', $selectedListId) === (string) $list->id ? 'selected' : '' }}>
-                                    {{ $list->name }} (Owner: {{ $list->owner->name }})
+                                    {{ $list->name }} {{ $list->owner ? '(Owner: ' . $list->owner->name . ')' : '' }}
                                 </option>
                             @endforeach
                         </select>

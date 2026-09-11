@@ -12,82 +12,24 @@ use Illuminate\View\View;
 class DashboardController extends Controller
 {
     /**
-     * Display the dashboard (admin or user).
+     * Display the task management dashboard.
      */
     public function index(Request $request): View
     {
         $user = Auth::user();
 
-        if ($user->isAdmin()) {
-            return $this->adminDashboard();
-        }
-
-        return $this->userDashboard($user);
-    }
-
-    /**
-     * Render the admin dashboard view.
-     */
-    protected function adminDashboard(): View
-    {
-        $totalUsers = User::count();
-        $adminCount = User::where('role', 'admin')->count();
-        $regularUserCount = User::where('role', 'user')->count();
-
-        // Active users: users with tasks or task lists
-        $activeUsers = User::whereHas('createdTasks')
-            ->orWhereHas('assignedTasks')
-            ->orWhereHas('ownedTaskLists')
-            ->orWhereHas('sharedTaskLists')
-            ->distinct()
-            ->count();
-
-        $totalTaskLists = TaskList::count();
-        $totalTasks = Task::count();
-        $completedTasks = Task::where('status', 'Completed')->count();
-        $inProgressTasks = Task::where('status', 'In Progress')->count();
-        $pendingTasks = Task::where('status', 'Pending')->count();
-
-        $highPriorityTasks = Task::where('priority', 'High')->count();
-        $mediumPriorityTasks = Task::where('priority', 'Medium')->count();
-        $lowPriorityTasks = Task::where('priority', 'Low')->count();
-
-        $recentUsers = User::latest()->take(5)->get();
-        $recentTasks = Task::with(['taskList', 'creator', 'assignee'])->latest()->take(6)->get();
-
-        return view('dashboard.admin', compact(
-            'totalUsers',
-            'adminCount',
-            'regularUserCount',
-            'activeUsers',
-            'totalTaskLists',
-            'totalTasks',
-            'completedTasks',
-            'inProgressTasks',
-            'pendingTasks',
-            'highPriorityTasks',
-            'mediumPriorityTasks',
-            'lowPriorityTasks',
-            'recentUsers',
-            'recentTasks'
-        ));
-    }
-
-    /**
-     * Render the user dashboard view.
-     */
-    protected function userDashboard(User $user): View
-    {
-        // Get all task lists accessible by this user (owned or shared)
         $taskListIds = TaskList::where('user_id', $user->id)
             ->orWhereHas('members', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
             })
             ->pluck('id');
 
-        $totalTaskLists = $taskListIds->count();
+        $tasksQuery = Task::where(function ($q) use ($taskListIds, $user) {
+            $q->whereIn('task_list_id', $taskListIds)
+                ->orWhere('created_by', $user->id)
+                ->orWhere('assigned_to', $user->id);
+        });
 
-        $tasksQuery = Task::whereIn('task_list_id', $taskListIds);
         $totalTasks = (clone $tasksQuery)->count();
         $completedTasks = (clone $tasksQuery)->where('status', 'Completed')->count();
         $inProgressTasks = (clone $tasksQuery)->where('status', 'In Progress')->count();
@@ -95,20 +37,16 @@ class DashboardController extends Controller
 
         $progressPercentage = $totalTasks > 0 ? (int) round(($completedTasks / $totalTasks) * 100) : 0;
 
-        // Upcoming deadlines: tasks due soon (within next 7 days or not completed)
+        $highPriorityCount = (clone $tasksQuery)->where('priority', 'High')->count();
+        $mediumPriorityCount = (clone $tasksQuery)->where('priority', 'Medium')->count();
+        $lowPriorityCount = (clone $tasksQuery)->where('priority', 'Low')->count();
+
+        // Upcoming deadlines: tasks not completed ordered by deadline
         $upcomingDeadlines = (clone $tasksQuery)
-            ->with(['taskList', 'assignee'])
+            ->with(['taskList', 'assignee', 'creator'])
             ->where('status', '!=', 'Completed')
             ->orderBy('deadline', 'asc')
             ->take(6)
-            ->get();
-
-        // Recent task lists
-        $recentTaskLists = TaskList::whereIn('id', $taskListIds)
-            ->with(['owner', 'members', 'tasks'])
-            ->withCount('tasks')
-            ->latest()
-            ->take(4)
             ->get();
 
         // Tasks assigned directly to this user
@@ -117,14 +55,15 @@ class DashboardController extends Controller
             ->count();
 
         return view('dashboard.user', compact(
-            'totalTaskLists',
             'totalTasks',
             'completedTasks',
             'inProgressTasks',
             'pendingTasks',
             'progressPercentage',
+            'highPriorityCount',
+            'mediumPriorityCount',
+            'lowPriorityCount',
             'upcomingDeadlines',
-            'recentTaskLists',
             'myAssignedTasksCount'
         ));
     }

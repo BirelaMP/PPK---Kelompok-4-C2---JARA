@@ -219,30 +219,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('task-lists.*') ? 'active' : '' }}" href="{{ route('task-lists.index') }}">
-                                <i class="bi bi-collection-fill"></i>
-                                <span>Task Lists</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}">
                                 <i class="bi bi-check2-square"></i>
-                                <span>All Tasks</span>
+                                <span>Task Management</span>
                             </a>
                         </li>
                     </ul>
-
-                    @if(Auth::check() && Auth::user()->isAdmin())
-                        <div class="sidebar-heading mt-3">Administration</div>
-                        <ul class="nav flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
-                                    <i class="bi bi-people-fill"></i>
-                                    <span>User Management</span>
-                                </a>
-                            </li>
-                        </ul>
-                    @endif
 
                     <div class="sidebar-heading mt-4">Account</div>
                     <ul class="nav flex-column mb-4">
