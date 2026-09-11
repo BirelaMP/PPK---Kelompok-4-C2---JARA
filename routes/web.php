@@ -2,8 +2,6 @@
 
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskListMemberController;
 use App\Http\Controllers\UserController;
@@ -26,11 +24,6 @@ Route::middleware('guest')->group(function () {
 // Logout Route
 Route::post('/logout', [AuthController::class, 'destroy'])->middleware('auth')->name('logout');
 
-// Legacy Project Collaboration Routes
-Route::get('/projects/{project}', [ProjectController::class, 'legacyShow'])->name('projects.show');
-Route::post('/projects/{project}/members', [ProjectMemberController::class, 'legacyStore'])->name('projects.members.store');
-Route::delete('/projects/{project}/members/{user}', [ProjectMemberController::class, 'legacyDestroy'])->name('projects.members.destroy');
-
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
     // Dashboard
@@ -39,15 +32,6 @@ Route::middleware('auth')->group(function () {
     // SRS-02: Task Management
     Route::resource('tasks', TaskController::class);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
-
-    // Collaboration: Project / Lists
-    Route::get('/lists', [ProjectController::class, 'index'])->name('lists.index');
-    Route::post('/lists', [ProjectController::class, 'store'])->name('lists.store');
-    Route::get('/lists/{project}', [ProjectController::class, 'show'])->name('lists.show');
-    Route::post('/lists/{project}/tasks', [TaskController::class, 'storeProjectTask'])->name('lists.tasks.store');
-    Route::patch('/lists/{project}/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
-    Route::post('/lists/{project}/members', [ProjectMemberController::class, 'store'])->name('lists.members.store');
-    Route::delete('/lists/{project}/members/{user}', [ProjectMemberController::class, 'destroy'])->name('lists.members.destroy');
 
     // Collaboration: Task List Members
     Route::get('/task-lists/{taskList}/members', [TaskListMemberController::class, 'index'])->name('task-lists.members.index');

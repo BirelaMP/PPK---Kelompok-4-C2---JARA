@@ -42,14 +42,6 @@ class Task extends Model
     }
 
     /**
-     * The project that this task belongs to (collaboration module).
-     */
-    public function project(): BelongsTo
-    {
-        return $this->belongsTo(Project::class);
-    }
-
-    /**
      * The task list that this task belongs to.
      */
     public function taskList(): BelongsTo

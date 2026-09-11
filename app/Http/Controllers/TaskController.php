@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Task\TaskStoreRequest;
 use App\Http\Requests\Task\TaskUpdateRequest;
-use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskList;
 use App\Models\User;
@@ -286,43 +285,5 @@ class TaskController extends Controller
 
         return false;
     }
-
-    /**
-     * Store task within a project (Collaboration module compatibility).
-     */
-    public function storeProjectTask(Request $request, Project $project): RedirectResponse
-    {
-        abort_unless($project->owner_id === auth()->id() || $project->members()->whereKey(auth()->id())->exists(), 403);
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'priority' => ['required', 'string'],
-            'deadline' => ['nullable', 'date'],
-        ]);
-
-        $project->tasks()->create([
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'priority' => ucfirst($data['priority']),
-            'status' => 'pending',
-            'deadline' => $data['deadline'] ?? null,
-            'created_by' => auth()->id(),
-        ]);
-
-        return to_route('lists.show', $project)->with('success', 'Task created successfully!');
-    }
-
-    /**
-     * Toggle task completion within a project (Collaboration module compatibility).
-     */
-    public function toggle(Project $project, Task $task): RedirectResponse
-    {
-        abort_unless($project->owner_id === auth()->id() || $project->members()->whereKey(auth()->id())->exists(), 403);
-        abort_unless((int) $task->project_id === (int) $project->id, 404);
-
-        $newStatus = (strtolower($task->status) === 'completed') ? 'pending' : 'completed';
-        $task->update(['status' => $newStatus]);
-
-        return to_route('lists.show', $project)->with('success', 'Task status updated!');
-    }
 }
+  
