@@ -1,0 +1,1 @@
+<!DOCTYPE html><html><body><h1>Login JARA</h1>@if($errors->any())<p>{{ $errors->first() }}</p>@endif<form method="POST">@csrf <p>Email <input name="email" type="email" required></p><p>Password <input name="password" type="password" required></p><button>Login</button></form><p><a href="{{ route('register') }}">Register</a></p></body></html>
