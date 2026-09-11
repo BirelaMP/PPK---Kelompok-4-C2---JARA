@@ -13,22 +13,70 @@ class Task extends Model
     use HasFactory;
 
     /**
+     * The attributes that are mass assignable.
+     *
      * @var list<string>
      */
     protected $fillable = [
-        'project_id',
+        'task_list_id',
+        'created_by',
+        'assigned_to',
         'title',
         'description',
         'priority',
-        'deadline',
         'status',
+        'deadline',
     ];
 
     /**
-     * @return BelongsTo<Project, $this>
+     * The attributes that should be cast.
+     *
+     * @return array<string, string>
      */
-    public function project(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(Project::class);
+        return [
+            'deadline' => 'date',
+        ];
+    }
+
+    /**
+     * The task list that this task belongs to.
+     */
+    public function taskList(): BelongsTo
+    {
+        return $this->belongsTo(TaskList::class, 'task_list_id');
+    }
+
+    /**
+     * The user who created this task.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * The user to whom this task is assigned.
+     */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Check if task is completed.
+     */
+    public function isCompleted(): bool
+    {
+        return $this->status === 'Completed';
+    }
+
+    /**
+     * Check if task is overdue.
+     */
+    public function isOverdue(): bool
+    {
+        return ! $this->isCompleted() && $this->deadline->isPast() && ! $this->deadline->isToday();
     }
 }
