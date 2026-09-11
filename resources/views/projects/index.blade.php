@@ -1,43 +1,35 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>JARA - Projects</title>
-</head>
-<body>
+<?php
 
-    <h1>Daftar Project</h1>
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-    @if(session('success'))
-        <p>{{ session('success') }}</p>
-    @endif
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('projects', function (Blueprint $table) {
+            $table->id();
 
-    <a href="{{ route('projects.create') }}">+ Tambah Project</a>
+            $table->foreignId('created_by')
+                ->constrained('users')
+                ->onDelete('cascade');
 
-    <hr>
+            $table->string('name');
+            $table->text('description')->nullable();
 
-    @forelse($projects as $project)
-        <div>
-            <h2>{{ $project->name }}</h2>
+            $table->timestamps();
+        });
+    }
 
-            @if($project->description)
-                <p>{{ $project->description }}</p>
-            @endif
-
-            <a href="{{ route('projects.edit', $project) }}">Edit</a>
-
-            <form action="{{ route('projects.destroy', $project) }}"
-                  method="POST"
-                  style="display:inline;">
-                @csrf
-                @method('DELETE')
-                <button type="submit">Hapus</button>
-            </form>
-        </div>
-
-        <hr>
-    @empty
-        <p>Belum ada project.</p>
-    @endforelse
-
-</body>
-</html>
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('projects');
+    }
+};
