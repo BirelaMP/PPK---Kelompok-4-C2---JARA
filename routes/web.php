@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskListController;
 use App\Http\Controllers\TaskListMemberController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -48,13 +49,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/lists/{project}/members', [ProjectMemberController::class, 'store'])->name('lists.members.store');
     Route::delete('/lists/{project}/members/{user}', [ProjectMemberController::class, 'destroy'])->name('lists.members.destroy');
 
+    // Task List Management (Atomic PPK Update)
+    Route::resource('task-lists', TaskListController::class);
+
     // Collaboration: Task List Members
     Route::get('/task-lists/{taskList}/members', [TaskListMemberController::class, 'index'])->name('task-lists.members.index');
     Route::post('/task-lists/{taskList}/members', [TaskListMemberController::class, 'store'])->name('task-lists.members.store');
     Route::delete('/task-lists/{taskList}/members/{user}', [TaskListMemberController::class, 'destroy'])->name('task-lists.members.destroy');
-    Route::get('/task-lists/{taskList}', function ($taskList) {
-        return redirect()->route('tasks.index', ['task_list_id' => is_object($taskList) ? $taskList->id : $taskList]);
-    })->name('task-lists.show');
 
     // Admin Users (AdminUserController)
     Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users');
