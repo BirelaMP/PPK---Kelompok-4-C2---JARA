@@ -78,7 +78,7 @@ class Task extends Model
      */
     public function isCompleted(): bool
     {
-        return $this->status === 'Completed';
+        return strtolower($this->status ?? '') === 'completed';
     }
 
     /**
@@ -86,6 +86,6 @@ class Task extends Model
      */
     public function isOverdue(): bool
     {
-        return ! $this->isCompleted() && $this->deadline->isPast() && ! $this->deadline->isToday();
+        return ! $this->isCompleted() && $this->deadline && $this->deadline->isPast() && ! $this->deadline->isToday();
     }
 }

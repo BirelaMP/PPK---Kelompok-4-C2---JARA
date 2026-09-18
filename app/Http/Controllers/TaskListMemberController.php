@@ -26,7 +26,7 @@ class TaskListMemberController extends Controller
 
         $totalTasks = $taskList->tasks()->count();
         $completedTasks = $taskList->tasks()
-            ->where('status', 'Completed')
+            ->whereIn('status', ['Completed', 'completed'])
             ->count();
 
         $progress = $totalTasks > 0

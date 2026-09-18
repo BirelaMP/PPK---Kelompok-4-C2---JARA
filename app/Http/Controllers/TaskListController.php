@@ -117,9 +117,9 @@ class TaskListController extends Controller
             ->withQueryString();
 
         $totalCount = $taskList->tasks()->count();
-        $completedCount = $taskList->tasks()->where('status', 'Completed')->count();
-        $inProgressCount = $taskList->tasks()->where('status', 'In Progress')->count();
-        $pendingCount = $taskList->tasks()->where('status', 'Pending')->count();
+        $completedCount = $taskList->tasks()->whereIn('status', ['Completed', 'completed'])->count();
+        $inProgressCount = $taskList->tasks()->whereIn('status', ['In Progress', 'in progress'])->count();
+        $pendingCount = $taskList->tasks()->whereIn('status', ['Pending', 'pending'])->count();
         $progress = $totalCount > 0 ? (int) round(($completedCount / $totalCount) * 100) : 0;
 
         $existingMemberIds = collect([$taskList->user_id]);

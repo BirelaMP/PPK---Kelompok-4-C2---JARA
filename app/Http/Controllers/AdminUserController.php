@@ -36,6 +36,6 @@ class AdminUserController extends Controller
 
     private function authorizeAdmin(): void
     {
-        abort_unless(auth()->user()?->is_admin, 403);
+        abort_unless(auth()->user()?->isAdmin(), 403);
     }
 }

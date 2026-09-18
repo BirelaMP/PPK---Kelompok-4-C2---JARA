@@ -92,7 +92,7 @@ class TaskList extends Model
             return 0;
         }
 
-        $completed = $this->tasks()->where('status', 'Completed')->count();
+        $completed = $this->tasks()->whereIn('status', ['Completed', 'completed'])->count();
 
         return (int) round(($completed / $total) * 100);
     }
